@@ -1,11 +1,11 @@
 /**
  * DropMenu.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
@@ -127,8 +127,8 @@
 		update : function() {
 			var t = this, s = t.settings, tb = DOM.get('menu_' + t.id + '_tbl'), co = DOM.get('menu_' + t.id + '_co'), tw, th;
 
-			tw = s.max_width ? Math.min(tb.offsetWidth, s.max_width) : tb.offsetWidth;
-			th = s.max_height ? Math.min(tb.offsetHeight, s.max_height) : tb.offsetHeight;
+			tw = s.max_width ? Math.min(tb.clientWidth, s.max_width) : tb.clientWidth;
+			th = s.max_height ? Math.min(tb.clientHeight, s.max_height) : tb.clientHeight;
 
 			if (!DOM.boxModel)
 				t.element.setStyles({width : tw + 2, height : th + 2});
@@ -226,7 +226,7 @@
 					if (m.settings.onclick)
 						m.settings.onclick(e);
 
-					return false; // Cancel to fix onbeforeunload problem
+					return Event.cancel(e); // Cancel to fix onbeforeunload problem
 				}
 			});
 
@@ -392,7 +392,7 @@
 		// Internal functions
 		_setupKeyboardNav : function(){
 			var contextMenu, menuItems, t=this; 
-			contextMenu = DOM.get('menu_' + t.id);
+			contextMenu = DOM.select('#menu_' + t.id)[0];
 			menuItems = DOM.select('a[role=option]', 'menu_' + t.id);
 			menuItems.splice(0,0,contextMenu);
 			t.keyboardNav = new tinymce.ui.KeyboardNavigation({
@@ -455,12 +455,8 @@
 
 			n = DOM.add(n, s.element || 'span', {'class' : 'mceText', title : o.settings.title}, o.settings.title);
 
-			if (o.settings.style) {
-				if (typeof o.settings.style == "function")
-					o.settings.style = o.settings.style();
-
+			if (o.settings.style)
 				DOM.setAttrib(n, 'style', o.settings.style);
-			}
 
 			if (tb.childNodes.length == 1)
 				DOM.addClass(ro, 'mceFirst');

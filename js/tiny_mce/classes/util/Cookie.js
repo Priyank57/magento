@@ -1,11 +1,11 @@
 /**
  * Cookie.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function() {
@@ -88,7 +88,7 @@
 			if (b == -1) {
 				b = c.indexOf(p);
 
-				if (b !== 0)
+				if (b != 0)
 					return null;
 			} else
 				b += 2;
@@ -124,16 +124,15 @@
 		 * Removes/deletes a cookie by name.
 		 *
 		 * @method remove
-		 * @param {String} name Cookie name to remove/delete.
-		 * @param {Strong} path Optional path to remove the cookie from.
-		 * @param {Strong} domain Optional domain to restrict the cookie to.
+		 * @param {String} n Cookie name to remove/delete.
+		 * @param {Strong} p Optional path to remove the cookie from.
 		 */
-		remove : function(name, path, domain) {
-			var date = new Date();
+		remove : function(n, p) {
+			var d = new Date();
 
-			date.setTime(date.getTime() - 1000);
+			d.setTime(d.getTime() - 1000);
 
-			this.set(name, '', date, path, domain);
+			this.set(n, '', d, p, d);
 		}
 	});
 })();

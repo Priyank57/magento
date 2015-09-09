@@ -10,18 +10,18 @@
  * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magento.com so we can send you a copy immediately.
+ * to license@magentocommerce.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magento.com for more information.
+ * needs please refer to http://www.magentocommerce.com for more information.
  *
  * @category    Mage
  * @package     Mage_Adminhtml
- * @copyright  Copyright (c) 2006-2015 X.commerce, Inc. (http://www.magento.com)
- * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @copyright   Copyright (c) 2014 Magento Inc. (http://www.magentocommerce.com)
+ * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -47,13 +47,11 @@ class Mage_Adminhtml_Block_Sales_Order_View extends Mage_Adminhtml_Block_Widget_
         $this->_removeButton('save');
         $this->setId('sales_order_view');
         $order = $this->getOrder();
-        $coreHelper = Mage::helper('core');
 
         if ($this->_isAllowedAction('edit') && $order->canEdit()) {
-            $confirmationMessage = $coreHelper->jsQuoteEscape(
-                Mage::helper('sales')->__('Are you sure? This order will be canceled and a new one will be created instead')
-            );
-            $onclickJs = 'deleteConfirm(\'' . $confirmationMessage . '\', \'' . $this->getEditUrl() . '\');';
+            $onclickJs = 'deleteConfirm(\''
+                . Mage::helper('sales')->__('Are you sure? This order will be canceled and a new one will be created instead')
+                . '\', \'' . $this->getEditUrl() . '\');';
             $this->_addButton('order_edit', array(
                 'label'    => Mage::helper('sales')->__('Edit'),
                 'onclick'  => $onclickJs,
@@ -68,44 +66,34 @@ class Mage_Adminhtml_Block_Sales_Order_View extends Mage_Adminhtml_Block_Widget_
                 false
             ));
             if ($nonEditableTypes) {
-                $confirmationMessage = $coreHelper->jsQuoteEscape(
-                    Mage::helper('sales')
-                        ->__('This order contains (%s) items and therefore cannot be edited through the admin interface at this time, if you wish to continue editing the (%s) items will be removed, the order will be canceled and a new order will be placed.',
-                        implode(', ', $nonEditableTypes), implode(', ', $nonEditableTypes))
-                );
                 $this->_updateButton('order_edit', 'onclick',
-                    'if (!confirm(\'' . $confirmationMessage . '\')) return false;' . $onclickJs
+                    'if (!confirm(\'' .
+                    Mage::helper('sales')->__('This order contains (%s) items and therefore cannot be edited through the admin interface at this time, if you wish to continue editing the (%s) items will be removed, the order will be canceled and a new order will be placed.', implode(', ', $nonEditableTypes), implode(', ', $nonEditableTypes)) . '\')) return false;' . $onclickJs
                 );
             }
         }
 
         if ($this->_isAllowedAction('cancel') && $order->canCancel()) {
-            $confirmationMessage = $coreHelper->jsQuoteEscape(
-                Mage::helper('sales')->__('Are you sure you want to cancel this order?')
-            );
+            $message = Mage::helper('sales')->__('Are you sure you want to cancel this order?');
             $this->_addButton('order_cancel', array(
                 'label'     => Mage::helper('sales')->__('Cancel'),
-                'onclick'   => 'deleteConfirm(\'' . $confirmationMessage . '\', \'' . $this->getCancelUrl() . '\')',
+                'onclick'   => 'deleteConfirm(\''.$message.'\', \'' . $this->getCancelUrl() . '\')',
             ));
         }
 
         if ($this->_isAllowedAction('emails') && !$order->isCanceled()) {
-            $confirmationMessage = $coreHelper->jsQuoteEscape(
-                Mage::helper('sales')->__('Are you sure you want to send order email to customer?')
-            );
+            $message = Mage::helper('sales')->__('Are you sure you want to send order email to customer?');
             $this->addButton('send_notification', array(
                 'label'     => Mage::helper('sales')->__('Send Email'),
-                'onclick'   => "confirmSetLocation('{$confirmationMessage}', '{$this->getEmailUrl()}')",
+                'onclick'   => "confirmSetLocation('{$message}', '{$this->getEmailUrl()}')",
             ));
         }
 
         if ($this->_isAllowedAction('creditmemo') && $order->canCreditmemo()) {
-            $confirmationMessage = $coreHelper->jsQuoteEscape(
-                Mage::helper('sales')->__('This will create an offline refund. To create an online refund, open an invoice and create credit memo for it. Do you wish to proceed?')
-            );
+            $message = Mage::helper('sales')->__('This will create an offline refund. To create an online refund, open an invoice and create credit memo for it. Do you wish to proceed?');
             $onClick = "setLocation('{$this->getCreditmemoUrl()}')";
             if ($order->getPayment()->getMethodInstance()->isGateway()) {
-                $onClick = "confirmSetLocation('{$confirmationMessage}', '{$this->getCreditmemoUrl()}')";
+                $onClick = "confirmSetLocation('{$message}', '{$this->getCreditmemoUrl()}')";
             }
             $this->_addButton('order_creditmemo', array(
                 'label'     => Mage::helper('sales')->__('Credit Memo'),
@@ -116,12 +104,10 @@ class Mage_Adminhtml_Block_Sales_Order_View extends Mage_Adminhtml_Block_Widget_
 
         // invoice action intentionally
         if ($this->_isAllowedAction('invoice') && $order->canVoidPayment()) {
-            $confirmationMessage = $coreHelper->jsQuoteEscape(
-                Mage::helper('sales')->__('Are you sure you want to void the payment?')
-            );
+            $message = Mage::helper('sales')->__('Are you sure you want to void the payment?');
             $this->addButton('void_payment', array(
                 'label'     => Mage::helper('sales')->__('Void'),
-                'onclick'   => "confirmSetLocation('{$confirmationMessage}', '{$this->getVoidPaymentUrl()}')",
+                'onclick'   => "confirmSetLocation('{$message}', '{$this->getVoidPaymentUrl()}')",
             ));
         }
 
@@ -141,21 +127,15 @@ class Mage_Adminhtml_Block_Sales_Order_View extends Mage_Adminhtml_Block_Widget_
 
         if ($this->_isAllowedAction('review_payment')) {
             if ($order->canReviewPayment()) {
-                $confirmationMessage = $coreHelper->jsQuoteEscape(
-                    Mage::helper('sales')->__('Are you sure you want to accept this payment?')
-                );
-                $onClick = "confirmSetLocation('{$confirmationMessage}', '{$this->getReviewPaymentUrl('accept')}')";
+                $message = Mage::helper('sales')->__('Are you sure you want to accept this payment?');
                 $this->_addButton('accept_payment', array(
                     'label'     => Mage::helper('sales')->__('Accept Payment'),
-                    'onclick'   => $onClick,
+                    'onclick'   => "confirmSetLocation('{$message}', '{$this->getReviewPaymentUrl('accept')}')",
                 ));
-                $confirmationMessage = $coreHelper->jsQuoteEscape(
-                    Mage::helper('sales')->__('Are you sure you want to deny this payment?')
-                );
-                $onClick = "confirmSetLocation('{$confirmationMessage}', '{$this->getReviewPaymentUrl('deny')}')";
+                $message = Mage::helper('sales')->__('Are you sure you want to deny this payment?');
                 $this->_addButton('deny_payment', array(
                     'label'     => Mage::helper('sales')->__('Deny Payment'),
-                    'onclick'   => $onClick,
+                    'onclick'   => "confirmSetLocation('{$message}', '{$this->getReviewPaymentUrl('deny')}')",
                 ));
             }
             if ($order->canFetchPaymentReviewUpdate()) {

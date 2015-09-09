@@ -1,11 +1,11 @@
 /**
  * TridentSelection.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function() {
@@ -69,29 +69,30 @@
 				} else
 					checkRng.collapse(false);
 
-				// Walk character by character in text node until we hit the selected range endpoint, hit the end of document or parent isn't the right one
-				// We need to walk char by char since rng.text or rng.htmlText will trim line endings
-				offset = 0;
-				while (checkRng.compareEndPoints(start ? 'StartToStart' : 'StartToEnd', rng) !== 0) {
-					if (checkRng.move('character', 1) === 0 || parent != checkRng.parentElement()) {
-						break;
-					}
+				checkRng.setEndPoint(start ? 'EndToStart' : 'EndToEnd', rng);
 
-					offset++;
+				// Fix for edge case: <div style="width: 100px; height:100px;"><table>..</table>ab|c</div>
+				if (checkRng.compareEndPoints(start ? 'StartToStart' : 'StartToEnd', rng) > 0) {
+					checkRng = rng.duplicate();
+					checkRng.collapse(start);
+
+					offset = -1;
+					while (parent == checkRng.parentElement()) {
+						if (checkRng.move('character', -1) == 0)
+							break;
+
+						offset++;
+					}
 				}
+
+				offset = offset || checkRng.text.replace('\r\n', ' ').length;
 			} else {
 				// Child position is after the selection endpoint
 				checkRng.collapse(true);
+				checkRng.setEndPoint(start ? 'StartToStart' : 'StartToEnd', rng);
 
-				// Walk character by character in text node until we hit the selected range endpoint, hit the end of document or parent isn't the right one
-				offset = 0;
-				while (checkRng.compareEndPoints(start ? 'StartToStart' : 'StartToEnd', rng) !== 0) {
-					if (checkRng.move('character', -1) === 0 || parent != checkRng.parentElement()) {
-						break;
-					}
-
-					offset++;
-				}
+				// Get the length of the text to find where the endpoint is relative to it's container
+				offset = checkRng.text.replace('\r\n', ' ').length;
 			}
 
 			return {node : child, position : position, offset : offset, inside : inside};
@@ -252,7 +253,7 @@
 			var rng = selection.getRng(), start, end, bookmark = {};
 
 			function getIndexes(node) {
-				var parent, root, children, i, indexes = [];
+				var node, parent, root, children, i, indexes = [];
 
 				parent = node.parentNode;
 				root = dom.getRoot().parentNode;
@@ -361,8 +362,7 @@
 		};
 
 		this.addRange = function(rng) {
-			var ieRng, ctrlRng, startContainer, startOffset, endContainer, endOffset, sibling,
-				doc = selection.dom.doc, body = doc.body, nativeRng, ctrlElm;
+			var ieRng, ctrlRng, startContainer, startOffset, endContainer, endOffset, doc = selection.dom.doc, body = doc.body;
 
 			function setEndPoint(start) {
 				var container, offset, marker, tmpRng, nodes;
@@ -394,13 +394,12 @@
 						}
 
 						tmpRng.moveToElementText(marker);
-					} else if (container.canHaveHTML) {
+					} else {
 						// Empty node selection for example <div>|</div>
-						// Setting innerHTML with a span marker then remove that marker seems to keep empty block elements open
-						container.innerHTML = '<span>\uFEFF</span>';
-						marker = container.firstChild;
-						tmpRng.moveToElementText(marker);
-						tmpRng.collapse(FALSE); // Collapse false works better than true for some odd reason
+						marker = doc.createTextNode('\uFEFF');
+						container.appendChild(marker);
+						tmpRng.moveToElementText(marker.parentNode);
+						tmpRng.collapse(TRUE);
 					}
 
 					ieRng.setEndPoint(start ? 'StartToStart' : 'EndToEnd', tmpRng);
@@ -416,49 +415,13 @@
 			ieRng = body.createTextRange();
 
 			// If single element selection then try making a control selection out of it
-			if (startContainer == endContainer && startContainer.nodeType == 1) {
-				// Trick to place the caret inside an empty block element like <p></p>
-				if (startOffset == endOffset && !startContainer.hasChildNodes()) {
-					if (startContainer.canHaveHTML) {
-						// Check if previous sibling is an empty block if it is then we need to render it
-						// IE would otherwise move the caret into the sibling instead of the empty startContainer see: #5236
-						// Example this: <p></p><p>|</p> would become this: <p>|</p><p></p>
-						sibling = startContainer.previousSibling;
-						if (sibling && !sibling.hasChildNodes() && dom.isBlock(sibling)) {
-							sibling.innerHTML = '\uFEFF';
-						} else {
-							sibling = null;
-						}
-
-						startContainer.innerHTML = '<span>\uFEFF</span><span>\uFEFF</span>';
-						ieRng.moveToElementText(startContainer.lastChild);
-						ieRng.select();
-						dom.doc.selection.clear();
-						startContainer.innerHTML = '';
-
-						if (sibling) {
-							sibling.innerHTML = '';
-						}
-						return;
-					} else {
-						startOffset = dom.nodeIndex(startContainer);
-						startContainer = startContainer.parentNode;
-					}
-				}
-
+			if (startContainer == endContainer && startContainer.nodeType == 1 && startOffset == endOffset - 1) {
 				if (startOffset == endOffset - 1) {
 					try {
-						ctrlElm = startContainer.childNodes[startOffset];
 						ctrlRng = body.createControlRange();
-						ctrlRng.addElement(ctrlElm);
+						ctrlRng.addElement(startContainer.childNodes[startOffset]);
 						ctrlRng.select();
-
-						// Check if the range produced is on the correct element and is a control range
-						// On IE 8 it will select the parent contentEditable container if you select an inner element see: #5398
-						nativeRng = selection.getRng();
-						if (nativeRng.item && ctrlElm === nativeRng.item(0)) {
-							return;
-						}
+						return;
 					} catch (ex) {
 						// Ignore
 					}

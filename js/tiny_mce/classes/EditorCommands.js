@@ -1,16 +1,16 @@
 /**
  * EditorCommands.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
 	// Added for compression purposes
-	var each = tinymce.each, undef, TRUE = true, FALSE = false;
+	var each = tinymce.each, undefined, TRUE = true, FALSE = false;
 
 	/**
 	 * This class enables you to add custom editor commands and it contains
@@ -109,10 +109,10 @@
 		// Private methods
 
 		function execNativeCommand(command, ui, value) {
-			if (ui === undef)
+			if (ui === undefined)
 				ui = FALSE;
 
-			if (value === undef)
+			if (value === undefined)
 				value = null;
 
 			return editor.getDoc().execCommand(command, ui, value);
@@ -123,7 +123,7 @@
 		};
 
 		function toggleFormat(name, value) {
-			formatter.toggle(name, value ? {value : value} : undef);
+			formatter.toggle(name, value ? {value : value} : undefined);
 		};
 
 		function storeSelection(type) {
@@ -289,8 +289,6 @@
 				var parser, serializer, parentNode, rootNode, fragment, args,
 					marker, nodeRect, viewPortRect, rng, node, node2, bookmarkHtml, viewportBodyElement;
 
-				//selection.normalize();
-
 				// Setup parser and serializer
 				parser = editor.parser;
 				serializer = new tinymce.html.Serializer({}, editor.schema);
@@ -348,7 +346,7 @@
 
 					// Insert bookmark node and get the parent
 					selection.setContent(bookmarkHtml);
-					parentNode = selection.getNode();
+					parentNode = editor.selection.getNode();
 					rootNode = editor.getBody();
 
 					// Opera will return the document node when selection is in root
@@ -422,10 +420,6 @@
 				editor.setContent(editor.getContent().replace(/tiny_mce_marker/g, function() { return value }));
 			},
 
-			mceToggleFormat : function(command, ui, value) {
-				toggleFormat(value);
-			},
-
 			mceSetContent : function(command, ui, value) {
 				editor.setContent(value);
 			},
@@ -439,11 +433,6 @@
 				intentValue = parseInt(intentValue);
 
 				if (!queryCommandState('InsertUnorderedList') && !queryCommandState('InsertOrderedList')) {
-					// If forced_root_blocks is set to false we don't have a block to indent so lets create a div
-					if (!settings.forced_root_block && !dom.getParent(selection.getNode(), dom.isBlock)) {
-						formatter.apply('div');
-					}
-
 					each(selection.getSelectedBlocks(), function(element) {
 						if (command == 'outdent') {
 							value = Math.max(0, parseInt(element.style.paddingLeft || 0) - intentValue);
@@ -515,15 +504,10 @@
 			selectAll : function() {
 				var root = dom.getRoot(), rng = dom.createRng();
 
-				// Old IE does a better job with selectall than new versions
-				if (selection.getRng().setStart) {
-					rng.setStart(root, 0);
-					rng.setEnd(root, root.childNodes.length);
+				rng.setStart(root, 0);
+				rng.setEnd(root, root.childNodes.length);
 
-					selection.setRng(rng);
-				} else {
-					execNativeCommand('SelectAll');
-				}
+				editor.selection.setRng(rng);
 			}
 		});
 
@@ -531,12 +515,7 @@
 		addCommands({
 			// Override justify commands
 			'JustifyLeft,JustifyCenter,JustifyRight,JustifyFull' : function(command) {
-				var name = 'align' + command.substring(7);
-				var nodes = selection.isCollapsed() ? [dom.getParent(selection.getNode(), dom.isBlock)] : selection.getSelectedBlocks();
-				var matches = tinymce.map(nodes, function(node) {
-					return !!formatter.matchNode(node, name);
-				});
-				return tinymce.inArray(matches, TRUE) !== -1;
+				return isFormatMatch('align' + command.substring(7));
 			},
 
 			'Bold,Italic,Underline,Strikethrough,Superscript,Subscript' : function(command) {
@@ -562,10 +541,7 @@
 			},
 
 			'InsertUnorderedList,InsertOrderedList' : function(command) {
-				var list = dom.getParent(selection.getNode(), 'ul,ol');
-				return list && 
-				     (command === 'insertunorderedlist' && list.tagName === 'UL'
-				   || command === 'insertorderedlist' && list.tagName === 'OL');
+				return dom.getParent(selection.getNode(), command == 'insertunorderedlist' ? 'UL' : 'OL');
 			}
 		}, 'state');
 
@@ -586,14 +562,16 @@
 		}, 'value');
 
 		// Add undo manager logic
-		addCommands({
-			Undo : function() {
-				editor.undoManager.undo();
-			},
+		if (settings.custom_undo_redo) {
+			addCommands({
+				Undo : function() {
+					editor.undoManager.undo();
+				},
 
-			Redo : function() {
-				editor.undoManager.redo();
-			}
-		});
+				Redo : function() {
+					editor.undoManager.redo();
+				}
+			});
+		}
 	};
 })(tinymce);

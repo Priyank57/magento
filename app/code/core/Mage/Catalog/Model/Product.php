@@ -10,18 +10,18 @@
  * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magento.com so we can send you a copy immediately.
+ * to license@magentocommerce.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magento.com for more information.
+ * needs please refer to http://www.magentocommerce.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright  Copyright (c) 2006-2015 X.commerce, Inc. (http://www.magento.com)
- * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @copyright   Copyright (c) 2014 Magento Inc. (http://www.magentocommerce.com)
+ * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -546,7 +546,12 @@ class Mage_Catalog_Model_Product extends Mage_Catalog_Model_Abstract
         $this->getOptionInstance()->setProduct($this)
             ->saveOptions();
 
-        return parent::_afterSave();
+        $result = parent::_afterSave();
+
+        Mage::getSingleton('index/indexer')->processEntityAction(
+            $this, self::ENTITY, Mage_Index_Model_Event::TYPE_SAVE
+        );
+        return $result;
     }
 
     /**
@@ -559,7 +564,9 @@ class Mage_Catalog_Model_Product extends Mage_Catalog_Model_Abstract
     {
         $this->_protectFromNonAdmin();
         $this->cleanCache();
-
+        Mage::getSingleton('index/indexer')->logEvent(
+            $this, self::ENTITY, Mage_Index_Model_Event::TYPE_DELETE
+        );
         return parent::_beforeDelete();
     }
 
@@ -571,11 +578,9 @@ class Mage_Catalog_Model_Product extends Mage_Catalog_Model_Abstract
     protected function _afterDeleteCommit()
     {
         parent::_afterDeleteCommit();
-
-        /** @var \Mage_Index_Model_Indexer $indexer */
-        $indexer = Mage::getSingleton('index/indexer');
-
-        $indexer->processEntityAction($this, self::ENTITY, Mage_Index_Model_Event::TYPE_DELETE);
+        Mage::getSingleton('index/indexer')->indexEvents(
+            self::ENTITY, Mage_Index_Model_Event::TYPE_DELETE
+        );
     }
 
     /**
@@ -1889,28 +1894,17 @@ class Mage_Catalog_Model_Product extends Mage_Catalog_Model_Abstract
      *
      * @return array
      */
-    public function getCacheIdTagsWithCategories()
+    public function getCacheIdTags()
     {
-        $tags = $this->getCacheTags();
-        $affectedCategoryIds = $this->_getResource()->getCategoryIdsWithAnchors($this);
+        $tags = parent::getCacheIdTags();
+        $affectedCategoryIds = $this->getAffectedCategoryIds();
+        if (!$affectedCategoryIds) {
+            $affectedCategoryIds = $this->getCategoryIds();
+        }
         foreach ($affectedCategoryIds as $categoryId) {
             $tags[] = Mage_Catalog_Model_Category::CACHE_TAG.'_'.$categoryId;
         }
         return $tags;
-    }
-
-    /**
-     * Remove model onject related cache
-     *
-     * @return Mage_Core_Model_Abstract
-     */
-    public function cleanModelCache()
-    {
-        $tags = $this->getCacheIdTagsWithCategories();
-        if ($tags !== false) {
-            Mage::app()->cleanCache($tags);
-        }
-        return $this;
     }
 
     /**
@@ -2071,21 +2065,5 @@ class Mage_Catalog_Model_Product extends Mage_Catalog_Model_Abstract
     public function isDisabled()
     {
         return $this->getStatus() == Mage_Catalog_Model_Product_Status::STATUS_DISABLED;
-    }
-
-    /**
-     * Callback function which called after transaction commit in resource model
-     *
-     * @return Mage_Catalog_Model_Product
-     */
-    public function afterCommitCallback()
-    {
-        parent::afterCommitCallback();
-
-        /** @var \Mage_Index_Model_Indexer $indexer */
-        $indexer = Mage::getSingleton('index/indexer');
-        $indexer->processEntityAction($this, self::ENTITY, Mage_Index_Model_Event::TYPE_SAVE);
-
-        return $this;
     }
 }

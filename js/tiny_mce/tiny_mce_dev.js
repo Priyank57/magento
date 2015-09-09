@@ -59,12 +59,6 @@
 		include('firebug/firebug-lite.js');
 	}
 
-	// Load coverage version
-	if (query.coverage) {
-		base = base + '/../../tmp/jscoverage';
-		window.tinyMCEPreInit = {base: base, suffix: '_src', query: ''};
-	}
-	
 	// Core ns
 	include('tinymce.js');
 
@@ -94,16 +88,16 @@
 	include('html/Writer.js');
 
 	// tinymce.dom.*
-	include('dom/EventUtils.js');
-	include('dom/TreeWalker.js');
 	include('dom/DOMUtils.js');
 	include('dom/Range.js');
 	include('dom/TridentSelection.js');
 	include('dom/Sizzle.js');
+	include('dom/EventUtils.js');
 	include('dom/Element.js');
 	include('dom/Selection.js');
 	include('dom/Serializer.js');
 	include('dom/ScriptLoader.js');
+	include('dom/TreeWalker.js');
 	include('dom/RangeUtils.js');
 
 	// tinymce.ui.*
@@ -127,7 +121,6 @@
 	include('AddOnManager.js');
 	include('EditorManager.js');
 	include('Editor.js');
-	include('Editor.Events.js');
 	include('EditorCommands.js');
 	include('UndoManager.js');
 	include('ForceBlocks.js');
@@ -135,7 +128,6 @@
 	include('WindowManager.js');
 	include('Formatter.js');
 	include('LegacyInput.js');
-	include('EnterKey.js');
 
 	load();
 }());

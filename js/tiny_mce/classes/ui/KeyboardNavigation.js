@@ -1,11 +1,11 @@
 /**
  * KeyboardNavigation.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2011, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
@@ -67,15 +67,12 @@
 			 */
 			t.destroy = function() {
 				each(items, function(item) {
-					var elm = dom.get(item.id);
-
-					dom.unbind(elm, 'focus', itemFocussed);
-					dom.unbind(elm, 'blur', itemBlurred);
+					dom.unbind(dom.get(item.id), 'focus', itemFocussed);
+					dom.unbind(dom.get(item.id), 'blur', itemBlurred);
 				});
 
-				var rootElm = dom.get(root);
-				dom.unbind(rootElm, 'focus', rootFocussed);
-				dom.unbind(rootElm, 'keydown', rootKeydown);
+				dom.unbind(dom.get(root), 'focus', rootFocussed);
+				dom.unbind(dom.get(root), 'keydown', rootKeydown);
 
 				items = dom = root = t.focus = itemFocussed = itemBlurred = rootKeydown = rootFocussed = null;
 				t.destroy = function() {};
@@ -120,22 +117,18 @@
 				switch (evt.keyCode) {
 					case DOM_VK_LEFT:
 						if (enableLeftRight) t.moveFocus(-1);
-						Event.cancel(evt);
 						break;
 	
 					case DOM_VK_RIGHT:
 						if (enableLeftRight) t.moveFocus(1);
-						Event.cancel(evt);
 						break;
 	
 					case DOM_VK_UP:
 						if (enableUpDown) t.moveFocus(-1);
-						Event.cancel(evt);
 						break;
 
 					case DOM_VK_DOWN:
 						if (enableUpDown) t.moveFocus(1);
-						Event.cancel(evt);
 						break;
 
 					case DOM_VK_ESCAPE:
@@ -158,23 +151,21 @@
 
 			// Set up state and listeners for each item.
 			each(items, function(item, idx) {
-				var tabindex, elm;
+				var tabindex;
 
 				if (!item.id) {
 					item.id = dom.uniqueId('_mce_item_');
 				}
 
-				elm = dom.get(item.id);
-
 				if (excludeFromTabOrder) {
-					dom.bind(elm, 'blur', itemBlurred);
+					dom.bind(item.id, 'blur', itemBlurred);
 					tabindex = '-1';
 				} else {
 					tabindex = (idx === 0 ? '0' : '-1');
 				}
 
-				elm.setAttribute('tabindex', tabindex);
-				dom.bind(elm, 'focus', itemFocussed);
+				dom.setAttrib(item.id, 'tabindex', tabindex);
+				dom.bind(dom.get(item.id), 'focus', itemFocussed);
 			});
 			
 			// Setup initial state for root element.
@@ -183,11 +174,10 @@
 			}
 
 			dom.setAttrib(root, 'tabindex', '-1');
-
+			
 			// Setup listeners for root element.
-			var rootElm = dom.get(root);
-			dom.bind(rootElm, 'focus', rootFocussed);
-			dom.bind(rootElm, 'keydown', rootKeydown);
+			dom.bind(dom.get(root), 'focus', rootFocussed);
+			dom.bind(dom.get(root), 'keydown', rootKeydown);
 		}
 	});
 })(tinymce);

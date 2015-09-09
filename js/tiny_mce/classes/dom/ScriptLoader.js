@@ -1,11 +1,11 @@
 /**
  * ScriptLoader.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
@@ -42,7 +42,7 @@
 			scriptLoadedCallbacks = {},
 			queueLoadedCallbacks = [],
 			loading = 0,
-			undef;
+			undefined;
 
 		/**
 		 * Loads a specific script directly without adding it to the load queue.
@@ -109,14 +109,15 @@
 			}
 
 			// Create new script element
-			elm = document.createElement('script');
-			elm.id = id;
-			elm.type = 'text/javascript';
-			elm.src = tinymce._addVer(url);
+			elm = dom.create('script', {
+				id : id,
+				type : 'text/javascript',
+				src : tinymce._addVer(url)
+			});
 
 			// Add onload listener for non IE browsers since IE9
 			// fires onload event before the script is parsed and executed
-			if (!tinymce.isIE || tinymce.isIE11)
+			if (!tinymce.isIE)
 				elm.onload = done;
 
 			// Add onerror event will get fired on some browsers but not all of them
@@ -180,7 +181,7 @@
 			var item, state = states[url];
 
 			// Add url to load queue
-			if (state == undef) {
+			if (state == undefined) {
 				queue.push(url);
 				states[url] = QUEUED;
 			}
@@ -226,7 +227,7 @@
 					callback.func.call(callback.scope);
 				});
 
-				scriptLoadedCallbacks[url] = undef;
+				scriptLoadedCallbacks[url] = undefined;
 			};
 
 			queueLoadedCallbacks.push({

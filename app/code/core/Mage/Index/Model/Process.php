@@ -10,18 +10,18 @@
  * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magento.com so we can send you a copy immediately.
+ * to license@magentocommerce.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magento.com for more information.
+ * needs please refer to http://www.magentocommerce.com for more information.
  *
  * @category    Mage
  * @package     Mage_Index
- * @copyright  Copyright (c) 2006-2015 X.commerce, Inc. (http://www.magento.com)
- * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @copyright   Copyright (c) 2014 Magento Inc. (http://www.magentocommerce.com)
+ * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -47,7 +47,6 @@
 class Mage_Index_Model_Process extends Mage_Core_Model_Abstract
 {
     const XML_PATH_INDEXER_DATA     = 'global/index/indexer';
-
     /**
      * Process statuses
      */
@@ -79,11 +78,10 @@ class Mage_Index_Model_Process extends Mage_Core_Model_Abstract
     protected $_indexer = null;
 
     /**
-     * Locker Object
-     *
-     * @var Mage_Index_Model_Lock
+     * Process lock properties
      */
-    protected $_lockInstance = null;
+    protected $_isLocked = null;
+    protected $_lockFile = null;
 
     /**
      * Whether table changes are allowed
@@ -412,26 +410,23 @@ class Mage_Index_Model_Process extends Mage_Core_Model_Abstract
     }
 
     /**
-     * Returns Process lock name
+     * Get lock file resource
      *
-     * @return string
+     * @return resource
      */
-    public function getProcessLockName()
+    protected function _getLockFile()
     {
-        return 'index_process_' . $this->getId();
-    }
-
-    /**
-     * Returns Lock object.
-     *
-     * @return Mage_Index_Model_Lock|null
-     */
-    protected function _getLockInstance()
-    {
-        if (is_null($this->_lockInstance)) {
-            $this->_lockInstance = Mage_Index_Model_Lock::getInstance();
+        if ($this->_lockFile === null) {
+            $varDir = Mage::getConfig()->getVarDir('locks');
+            $file = $varDir . DS . 'index_process_'.$this->getId().'.lock';
+            if (is_file($file)) {
+                $this->_lockFile = fopen($file, 'w');
+            } else {
+                $this->_lockFile = fopen($file, 'x');
+            }
+            fwrite($this->_lockFile, date('r'));
         }
-        return $this->_lockInstance;
+        return $this->_lockFile;
     }
 
     /**
@@ -442,7 +437,8 @@ class Mage_Index_Model_Process extends Mage_Core_Model_Abstract
      */
     public function lock()
     {
-        $this->_getLockInstance()->setLock($this->getProcessLockName(), $this->getData('use_file_lock'));
+        $this->_isLocked = true;
+        flock($this->_getLockFile(), LOCK_EX | LOCK_NB);
         return $this;
     }
 
@@ -455,7 +451,8 @@ class Mage_Index_Model_Process extends Mage_Core_Model_Abstract
      */
     public function lockAndBlock()
     {
-        $this->_getLockInstance()->setLock($this->getProcessLockName(), $this->getData('use_file_lock'), true);
+        $this->_isLocked = true;
+        flock($this->_getLockFile(), LOCK_EX);
         return $this;
     }
 
@@ -466,7 +463,8 @@ class Mage_Index_Model_Process extends Mage_Core_Model_Abstract
      */
     public function unlock()
     {
-        $this->_getLockInstance()->releaseLock($this->getProcessLockName(), $this->getData('use_file_lock'));
+        $this->_isLocked = false;
+        flock($this->_getLockFile(), LOCK_UN);
         return $this;
     }
 
@@ -477,7 +475,26 @@ class Mage_Index_Model_Process extends Mage_Core_Model_Abstract
      */
     public function isLocked()
     {
-        return $this->_getLockInstance()->isLockExists($this->getProcessLockName(), $this->getData('use_file_lock'));
+        if ($this->_isLocked !== null) {
+            return $this->_isLocked;
+        } else {
+            $fp = $this->_getLockFile();
+            if (flock($fp, LOCK_EX | LOCK_NB)) {
+                flock($fp, LOCK_UN);
+                return false;
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Close file resource if it was opened
+     */
+    public function __destruct()
+    {
+        if ($this->_lockFile) {
+            fclose($this->_lockFile);
+        }
     }
 
     /**

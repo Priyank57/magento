@@ -16,9 +16,9 @@
  * @category   Zend
  * @package    Zend_Gdata
  * @subpackage App
- * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id$
+ * @version    $Id: App.php 25259 2013-02-13 17:38:12Z frosch $
  */
 
 /**
@@ -46,9 +46,6 @@
  */
 #require_once 'Zend/Uri/Http.php';
 
-/** @see Zend_Xml_Security */
-#require_once 'Zend/Xml/Security.php';
-
 /**
  * Provides Atom Publishing Protocol (APP) functionality.  This class and all
  * other components of Zend_Gdata_App are designed to work independently from
@@ -57,7 +54,7 @@
  * @category   Zend
  * @package    Zend_Gdata
  * @subpackage App
- * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zend_Gdata_App
@@ -825,10 +822,10 @@ class Zend_Gdata_App
         // Load the feed as an XML DOMDocument object
         @ini_set('track_errors', 1);
         $doc = new DOMDocument();
-        $doc = @Zend_Xml_Security::scan($string, $doc);
+        $success = @$doc->loadXML($string);
         @ini_restore('track_errors');
 
-        if (!$doc) {
+        if (!$success) {
             #require_once 'Zend/Gdata/App/Exception.php';
             throw new Zend_Gdata_App_Exception(
                 "DOMDocument cannot parse XML: $php_errormsg");

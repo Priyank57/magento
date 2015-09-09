@@ -130,7 +130,7 @@ class Zend_Mime
         $str = self::_encodeQuotedPrintable($str);
 
         // Split encoded text into separate lines
-        while (strlen($str) > 0) {
+        while ($str) {
             $ptr = strlen($str);
             if ($ptr > $lineLength) {
                 $ptr = $lineLength;

@@ -15,15 +15,10 @@
  * @category   Zend
  * @package    Zend_Application
  * @subpackage Bootstrap
- * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id$
+ * @version    $Id: Bootstrap.php 25073 2012-11-06 19:31:53Z rob $
  */
-
-/**
- * @see Zend_Application_Bootstrap_BootstrapAbstract
- */
-#require_once 'Zend/Application/Bootstrap/BootstrapAbstract.php';
 
 /**
  * Concrete base class for bootstrap classes
@@ -34,7 +29,7 @@
  * @category   Zend
  * @package    Zend_Application
  * @subpackage Bootstrap
- * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zend_Application_Bootstrap_Bootstrap
@@ -58,19 +53,16 @@ class Zend_Application_Bootstrap_Bootstrap
      * Ensure FrontController resource is registered
      *
      * @param  Zend_Application|Zend_Application_Bootstrap_Bootstrapper $application
+     * @return void
      */
     public function __construct($application)
     {
         parent::__construct($application);
 
         if ($application->hasOption('resourceloader')) {
-            $this->setOptions(
-                array(
-                    'resourceloader' => $application->getOption(
-                        'resourceloader'
-                    )
-                )
-            );
+            $this->setOptions(array(
+                'resourceloader' => $application->getOption('resourceloader')
+            ));
         }
         $this->getResourceLoader();
 
@@ -128,18 +120,14 @@ class Zend_Application_Bootstrap_Bootstrap
     public function getResourceLoader()
     {
         if ((null === $this->_resourceLoader)
-            && (false !== ($namespace = $this->getAppNamespace()))
+            && (false != ($namespace = $this->getAppNamespace()))
         ) {
             $r    = new ReflectionClass($this);
             $path = $r->getFileName();
-            $this->setResourceLoader(
-                new Zend_Application_Module_Autoloader(
-                    array(
-                        'namespace' => $namespace,
-                        'basePath'  => dirname($path),
-                    )
-                )
-            );
+            $this->setResourceLoader(new Zend_Application_Module_Autoloader(array(
+                'namespace' => $namespace,
+                'basePath'  => dirname($path),
+            )));
         }
         return $this->_resourceLoader;
     }

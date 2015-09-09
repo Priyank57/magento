@@ -1,11 +1,11 @@
 /**
  * Range.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(ns) {
@@ -56,13 +56,8 @@
 			cloneContents : cloneContents,
 			insertNode : insertNode,
 			surroundContents : surroundContents,
-			cloneRange : cloneRange,
-			toStringIE : toStringIE
+			cloneRange : cloneRange
 		});
-
-		function createDocumentFragment() {
-			return doc.createDocumentFragment();
-		};
 
 		function setStart(n, o) {
 			_setEndPoint(TRUE, n, o);
@@ -396,10 +391,10 @@
 		};
 
 		 function _traverseSameContainer(how) {
-			var frag, s, sub, n, cnt, sibling, xferNode, start, len;
+			var frag, s, sub, n, cnt, sibling, xferNode;
 
 			if (how != DELETE)
-				frag = createDocumentFragment();
+				frag = doc.createDocumentFragment();
 
 			// If selection is empty, just return the fragment
 			if (t[START_OFFSET] == t[END_OFFSET])
@@ -413,15 +408,7 @@
 
 				// set the original text node to its new value
 				if (how != CLONE) {
-					n = t[START_CONTAINER];
-					start = t[START_OFFSET];
-					len = t[END_OFFSET] - t[START_OFFSET];
-
-					if (start === 0 && len >= n.nodeValue.length - 1) {
-						n.parentNode.removeChild(n);
-					} else {
-						n.deleteData(start, len);
-					}
+					t[START_CONTAINER].deleteData(t[START_OFFSET], t[END_OFFSET] - t[START_OFFSET]);
 
 					// Nothing is partially selected, so collapse to start point
 					t.collapse(TRUE);
@@ -430,10 +417,7 @@
 				if (how == DELETE)
 					return;
 
-				if (sub.length > 0) {
-					frag.appendChild(doc.createTextNode(sub));
-				}
-
+				frag.appendChild(doc.createTextNode(sub));
 				return frag;
 			}
 
@@ -441,7 +425,7 @@
 			n = _getSelectedNode(t[START_CONTAINER], t[START_OFFSET]);
 			cnt = t[END_OFFSET] - t[START_OFFSET];
 
-			while (n && cnt > 0) {
+			while (cnt > 0) {
 				sibling = n.nextSibling;
 				xferNode = _traverseFullySelected(n, how);
 
@@ -463,7 +447,7 @@
 			var frag, n, endIdx, cnt, sibling, xferNode;
 
 			if (how != DELETE)
-				frag = createDocumentFragment();
+				frag = doc.createDocumentFragment();
 
 			n = _traverseRightBoundary(endAncestor, how);
 
@@ -510,7 +494,7 @@
 			var frag, startIdx, n, cnt, sibling, xferNode;
 
 			if (how != DELETE)
-				frag = createDocumentFragment();
+				frag = doc.createDocumentFragment();
 
 			n = _traverseLeftBoundary(startAncestor, how);
 			if (frag)
@@ -521,7 +505,7 @@
 
 			cnt = t[END_OFFSET] - startIdx;
 			n = startAncestor.nextSibling;
-			while (n && cnt > 0) {
+			while (cnt > 0) {
 				sibling = n.nextSibling;
 				xferNode = _traverseFullySelected(n, how);
 
@@ -544,7 +528,7 @@
 			var n, frag, commonParent, startOffset, endOffset, cnt, sibling, nextSibling;
 
 			if (how != DELETE)
-				frag = createDocumentFragment();
+				frag = doc.createDocumentFragment();
 
 			n = _traverseLeftBoundary(startAncestor, how);
 			if (frag)
@@ -679,7 +663,7 @@
 				if (how == DELETE)
 					return;
 
-				newNode = dom.clone(n, FALSE);
+				newNode = n.cloneNode(FALSE);
 				newNode.nodeValue = newNodeValue;
 
 				return newNode;
@@ -688,27 +672,16 @@
 			if (how == DELETE)
 				return;
 
-			return dom.clone(n, FALSE);
+			return n.cloneNode(FALSE);
 		};
 
 		function _traverseFullySelected(n, how) {
 			if (how != DELETE)
-				return how == CLONE ? dom.clone(n, TRUE) : n;
+				return how == CLONE ? n.cloneNode(TRUE) : n;
 
 			n.parentNode.removeChild(n);
 		};
-
-		function toStringIE() {
-			return dom.create('body', null, cloneContents()).outerText;
-		}
-		
-		return t;
 	};
 
 	ns.Range = Range;
-
-	// Older IE versions doesn't let you override toString by it's constructor so we have to stick it in the prototype
-	Range.prototype.toString = function() {
-		return this.toStringIE();
-	};
 })(tinymce.dom);

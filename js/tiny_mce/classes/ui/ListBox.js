@@ -1,15 +1,15 @@
 /**
  * ListBox.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
-	var DOM = tinymce.DOM, Event = tinymce.dom.Event, each = tinymce.each, Dispatcher = tinymce.util.Dispatcher, undef;
+	var DOM = tinymce.DOM, Event = tinymce.dom.Event, each = tinymce.each, Dispatcher = tinymce.util.Dispatcher;
 
 	/**
 	 * This class is used to create list boxes/select list. This one will generate
@@ -105,7 +105,6 @@
 			t.onRenderMenu = new tinymce.util.Dispatcher(this);
 
 			t.classPrefix = 'mceListBox';
-			t.marked = {};
 		},
 
 		/**
@@ -118,13 +117,11 @@
 		select : function(va) {
 			var t = this, fv, f;
 
-			t.marked = {};
-
-			if (va == undef)
+			if (va == undefined)
 				return t.selectByIndex(-1);
 
 			// Is string or number make function selector
-			if (va && typeof(va)=="function")
+			if (va && va.call)
 				f = va;
 			else {
 				f = function(v) {
@@ -158,8 +155,6 @@
 		selectByIndex : function(idx) {
 			var t = this, e, o, label;
 
-			t.marked = {};
-
 			if (idx != t.selectedIndex) {
 				e = DOM.get(t.id + '_text');
 				label = DOM.get(t.id + '_voiceDesc');
@@ -181,15 +176,6 @@
 				}
 				e = 0;
 			}
-		},
-
-		/**
-		 * Marks a specific item by name. Marked values are optional items to mark as active.
-		 *
-		 * @param {String} value Value item to mark.
-		 */
-		mark : function(value) {
-			this.marked[value] = true;
 		},
 
 		/**
@@ -250,7 +236,7 @@
 		showMenu : function() {
 			var t = this, p2, e = DOM.get(this.id), m;
 
-			if (t.isDisabled() || t.items.length === 0)
+			if (t.isDisabled() || t.items.length == 0)
 				return;
 
 			if (t.menu && t.menu.isMenuVisible)
@@ -269,19 +255,13 @@
 			m.settings.keyboard_focus = !tinymce.isOpera; // Opera is buggy when it comes to auto focus
 
 			// Select in menu
-			each(t.items, function(o) {
-				if (m.items[o.id]) {
-					m.items[o.id].setSelected(0);
-				}
-			});
+			if (t.oldID)
+				m.items[t.oldID].setSelected(0);
 
 			each(t.items, function(o) {
-				if (m.items[o.id] && t.marked[o.value]) {
-					m.items[o.id].setSelected(1);
-				}
-
 				if (o.value === t.selectedValue) {
 					m.items[o.id].setSelected(1);
+					t.oldID = o.id;
 				}
 			});
 
@@ -327,7 +307,7 @@
 			m = t.settings.control_manager.createDropMenu(t.id + '_menu', {
 				menu_line : 1,
 				'class' : t.classPrefix + 'Menu mceNoIcons',
-				max_width : 250,
+				max_width : 150,
 				max_height : 150
 			});
 
@@ -347,7 +327,7 @@
 
 			each(t.items, function(o) {
 				// No value then treat it as a title
-				if (o.value === undef) {
+				if (o.value === undefined) {
 					m.add({
 						title : o.title,
 						role : "option",
